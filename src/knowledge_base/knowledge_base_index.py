@@ -1,0 +1,1 @@
+#Classe che verrà usata per gestire l'indice della knowledge base (filtro, ricerca, caricamento, stampa)

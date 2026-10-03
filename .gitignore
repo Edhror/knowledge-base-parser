@@ -1,0 +1,20 @@
+# Ambiente virtuale locale
+.venv/
+venv/
+
+# Cache e file compilati Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurazioni locali PyCharm
+.idea/
+
+# File di sistema macOS
+.DS_Store
+
+# Output generati dal programma
+data/output/*.json
+
+# Mantiene la cartella output nella repository
+!data/output/.gitkeep
