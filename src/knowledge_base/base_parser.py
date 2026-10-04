@@ -1,7 +1,6 @@
 import hashlib
 import re
 import unicodedata
-import json
 from pathlib import Path
 from typing import Any
 from src.knowledge_base.document import Document
@@ -78,15 +77,3 @@ class BaseParser:
     # Assuming Document class is defined elsewhere and its constructor matches these arguments
     doc = Document(document_id,title, content, source_format, date, source_filename, metadata)
     return doc
-
-  def create_json_index(self, documents: list[Document], output_path: Path):
-    """Crea un indice JSON da una lista di oggetti Document.
-
-    Args:
-      documents (list[Document]): Una lista di oggetti Document da indicizzare.
-      output_path (Path): Il percorso del file di output JSON.
-    """
-    documents_data = [document.to_dict() for document in documents]
-
-    with output_path.open("w", encoding="utf-8") as json_file:
-      json.dump(documents_data, json_file, indent=4, ensure_ascii=False)

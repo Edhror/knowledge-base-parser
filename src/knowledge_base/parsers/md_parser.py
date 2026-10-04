@@ -9,7 +9,7 @@ class MdParser(BaseParser):
     """Parser che estrae i dati normalizzati da un file Markdown.
 
     Il titolo viene ricavato dal primo heading di livello 1 (``# Titolo``);
-    in sua assenza si usa il nome del file senza estensione. Vengono inoltre
+    in sua assenza si usa il nome del file normalizzato e senza estensione. Vengono inoltre
     calcolati metadati sul numero di righe e sulla struttura dei titoli.
     """
 
@@ -21,7 +21,7 @@ class MdParser(BaseParser):
 
         Returns:
             dict[str, Any]: Dizionario con le chiavi:
-                - ``title`` (str): primo titolo H1 o, in mancanza, il nome del file.
+                - ``title`` (str): primo titolo H1 o, in mancanza, il nome del file normalizzato e senza estensione.
                 - ``content`` (str): intero testo del file.
                 - ``source_format`` (str): sempre ``"markdown"``.
                 - ``source_filename`` (str): nome del file con estensione.
@@ -62,7 +62,7 @@ class MdParser(BaseParser):
 
         # Se non è stato trovato alcun titolo di livello 1, facciamo il fallback
         if not title:
-            title = file_path.stem
+            title = self.normalize_string(file_path.stem)
 
         source_format = "markdown"
 
@@ -85,7 +85,6 @@ class MdParser(BaseParser):
         if not date:
             raise ValueError("Errore di parsing: non è stato possibile determinare la data di ultima modifica del file.")
 
-        # crea un dizionario contenente gli elementi richiesti
         return {
             "title": title,
             "content": content,

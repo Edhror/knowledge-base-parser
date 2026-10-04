@@ -26,7 +26,7 @@ class CsvParser(BaseParser):
 
     Returns:
         dict[str, Any]: Un dizionario contenente:
-            - 'title' (str): Nome del file senza estensione.
+            - 'title' (str): Nome del file senza estensione e normalizzato.
             - 'content' (str): Contenuto testuale normalizzato in righe del tipo 'chiave: valore'.
             - 'source_format' (str): Costante 'csv'.
             - 'date' (str): Data di ultima modifica del file sorgente.
@@ -34,22 +34,17 @@ class CsvParser(BaseParser):
             - 'metadata' (dict): Metadati tecnici come numero di righe, colonne,
               delimitatore rilevato ed eventuali righe con valori in eccesso ('extra_values').
     """
-    # title, content, date e source_format sono valori obbligatori. Se uno solo di questi è vuoto, viene sollevata una eccezione.
     if not file_path.exists() or not file_path.is_file():
       raise FileNotFoundError(f"File non valido o inesistente: {file_path}")
 
-    # title contiene il nome del file senza estensione
-    title = file_path.stem
+    title = self.normalize_string(file_path.stem)
     if not title:
       raise ValueError("Il titolo (title) è vuoto.")
 
-    # source_filename è il nome del file, inclusa l'estensione
     source_filename = file_path.name
 
-    # source_format sarà "csv"
     source_format = "csv"
 
-    # date è la data di ultima modifica del file
     try:
       mtime = file_path.stat().st_mtime
       date = datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
@@ -59,7 +54,6 @@ class CsvParser(BaseParser):
     if not date:
       raise ValueError("La data (date) è vuota.")
 
-    # Leggi il file CSV per estrarre il contenuto e le informazioni tecniche (metadata)
     content_lines = []
     num_rows = 0
     num_cols = 0
@@ -67,7 +61,7 @@ class CsvParser(BaseParser):
     extra_values_map = {}
 
     with file_path.open("r", encoding="utf-8-sig") as csv_file:
-      # Cerca di rilevare il delimitatore automaticamente
+
       try:
         sample = csv_file.read(2048)
         dialect = csv.Sniffer().sniff(sample)
@@ -80,7 +74,6 @@ class CsvParser(BaseParser):
       rows = list(reader)
 
       if rows:
-        # Gestione intestazioni vuote -> Rinomina automaticamente column_1, column_2 ecc.
         headers = []
         for i, h in enumerate(rows[0]):
           clean_h = h.strip()
@@ -95,6 +88,7 @@ class CsvParser(BaseParser):
         content_lines.append("")
 
         for row_idx, row in enumerate(rows[1:], start=1):
+          # Controllo casi limite
           # Celle contenente solo spazi -> usa .strip()
           cleaned_row = [value.strip() for value in row]
 
@@ -120,12 +114,10 @@ class CsvParser(BaseParser):
       else:
         raise ValueError("Il file CSV è vuoto o non contiene dati validi.")
 
-    # content contiene l'intera tabella in formato testuale
     content = "\n".join(content_lines)
     if not content.strip():
       raise ValueError("Il contenuto (content) è vuoto.")
 
-    # metadata è un dizionario contenente informazioni tecniche ed extra_values se presenti
     metadata = {
         "num_rows": num_rows,
         "num_cols": num_cols,
@@ -134,13 +126,12 @@ class CsvParser(BaseParser):
     if extra_values_map:
       metadata["extra_values"] = extra_values_map
 
-    # Il dizionario prodotto sarà del tipo str, Any
     result = {
         "title": title,
         "content": content,
         "source_format": source_format,
-        "date": date,
         "source_filename": source_filename,
+        "date": date,
         "metadata": metadata
     }
 
