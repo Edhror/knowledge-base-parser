@@ -6,7 +6,33 @@ from src.knowledge_base.base_parser import BaseParser
 
 
 class MdParser(BaseParser):
+    """Parser che estrae i dati normalizzati da un file Markdown.
+
+    Il titolo viene ricavato dal primo heading di livello 1 (``# Titolo``);
+    in sua assenza si usa il nome del file senza estensione. Vengono inoltre
+    calcolati metadati sul numero di righe e sulla struttura dei titoli.
+    """
+
     def parse_file(self, file_path: Path) -> dict[str, Any]:
+        """Legge e analizza un file Markdown.
+
+        Args:
+            file_path (Path): Percorso del file .md da analizzare.
+
+        Returns:
+            dict[str, Any]: Dizionario con le chiavi:
+                - ``title`` (str): primo titolo H1 o, in mancanza, il nome del file.
+                - ``content`` (str): intero testo del file.
+                - ``source_format`` (str): sempre ``"markdown"``.
+                - ``source_filename`` (str): nome del file con estensione.
+                - ``date`` (str): data di ultima modifica (``%Y-%m-%d %H:%M:%S``).
+                - ``metadata`` (dict): ``num_lines``, ``num_titles`` e
+                  ``title_levels`` (conteggio dei titoli per livello, es. ``{"H1": 1, "H2": 3}``).
+
+        Raises:
+            FileNotFoundError: Se il percorso non esiste o non è un file.
+            ValueError: Se il contenuto è vuoto o la data di modifica non è determinabile.
+        """
         # usando il file_path, apre un file .md
         if not file_path.exists() or not file_path.is_file():
             raise FileNotFoundError(f"File non valido o inesistente: {file_path}")
