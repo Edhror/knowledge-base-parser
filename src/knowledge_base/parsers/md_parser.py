@@ -21,6 +21,7 @@ class MdParser(BaseParser):
 
         Returns:
             dict[str, Any]: Dizionario con le chiavi:
+                - ``document_id`` (str): ID univoco del documento.
                 - ``title`` (str): primo titolo H1 o, in mancanza, il nome del file normalizzato e senza estensione.
                 - ``content`` (str): intero testo del file.
                 - ``source_format`` (str): sempre ``"markdown"``.
@@ -85,7 +86,10 @@ class MdParser(BaseParser):
         if not date:
             raise ValueError("Errore di parsing: non è stato possibile determinare la data di ultima modifica del file.")
 
+        document_id = self.create_id(title, date, source_format, content)
+
         return {
+            "document_id": document_id,
             "title": title,
             "content": content,
             "source_format": source_format,

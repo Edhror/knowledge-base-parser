@@ -57,23 +57,3 @@ class BaseParser:
     string = re.sub(r"_+", "_", string)
     string = string.strip("_")
     return string
-
-  def create_document(self, file: dict[str,Any]) -> Document:
-    """Crea un oggetto Document da un dizionario di dati del file.
-
-    Args:
-      file (dict[str, Any]): Un dizionario contenente i dati del documento, come titolo, contenuto, ecc.
-
-    Returns:
-      Document: Un'istanza della classe Document.
-    """
-    title = file["title"]
-    content = file["content"]
-    source_format = file["source_format"]
-    source_filename = file["source_filename"]
-    date = file["date"]
-    metadata = file["metadata"]
-    document_id = self.create_id(title, date, source_format, content)
-    # Assuming Document class is defined elsewhere and its constructor matches these arguments
-    doc = Document(document_id,title, content, source_format, date, source_filename, metadata)
-    return doc

@@ -26,6 +26,7 @@ class CsvParser(BaseParser):
 
     Returns:
         dict[str, Any]: Un dizionario contenente:
+            - 'document_id' (str): ID univoco del documento generato a partire da titolo, data, formato e contenuto.
             - 'title' (str): Nome del file senza estensione e normalizzato.
             - 'content' (str): Contenuto testuale normalizzato in righe del tipo 'chiave: valore'.
             - 'source_format' (str): Costante 'csv'.
@@ -126,7 +127,10 @@ class CsvParser(BaseParser):
     if extra_values_map:
       metadata["extra_values"] = extra_values_map
 
+    document_id = self.create_id(title, date, source_format, content)
+
     result = {
+        "document_id": document_id,
         "title": title,
         "content": content,
         "source_format": source_format,

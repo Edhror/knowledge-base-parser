@@ -19,6 +19,7 @@ class TxtParser(BaseParser):
 
         Returns:
             dict[str, Any]: Dizionario con le chiavi:
+                - ``document_id`` (str): ID univoco del documento.
                 - ``title`` (str): il nome del file normalizzato e senza estensione.
                 - ``content`` (str): intero testo del file.
                 - ``source_format`` (str): sempre ``"text"``.
@@ -49,15 +50,20 @@ class TxtParser(BaseParser):
         except Exception:
             date = ""
 
+        source_format = "text"
+
         if not content.strip():
             raise ValueError("Errore di parsing: il contenuto del file è vuoto.")
         if not date:
             raise ValueError("Errore di parsing: non è stato possibile determinare la data di ultima modifica del file.")
 
+        document_id = self.create_id(title, date, source_format, content)
+
         return {
+            "document_id": document_id,
             "title": title,
             "content": content,
-            "source_format": "text",
+            "source_format": source_format,
             "source_filename": file_path.name,
             "date": date,
             "metadata": metadata

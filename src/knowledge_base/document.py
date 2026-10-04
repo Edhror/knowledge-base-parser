@@ -62,7 +62,8 @@ class Document:
         "excerpt": self.excerpt
     }
 
-  def from_dict(self, data: dict[str, Any]) -> "Document":
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> "Document":
     """
     Crea un'istanza di Document a partire dai dati dell'indice della knowledge base.
 
@@ -79,4 +80,4 @@ class Document:
     date = data["date"]
     source_filename = data["source_filename"]
     metadata = data["metadata"]
-    return Document(document_id, title, content, source_format, date, source_filename, metadata)
+    return cls(document_id, title, content, source_format, date, source_filename, metadata)
