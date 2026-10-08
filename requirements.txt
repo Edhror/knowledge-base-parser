@@ -1,0 +1,18 @@
+# Requisiti: Python >= 3.10 (sintassi dei tipi "X | None").
+#
+# Nessuna dipendenza esterna da PyPI.
+#
+# Moduli della libreria standard utilizzati (inclusi in Python, NON installare via pip).
+# Sono commentati perché pip li cercherebbe su PyPI, dove esistono pacchetti
+# omonimi non correlati o incompatibili (es. "hashlib", "datetime", "typing").
+# csv
+# datetime
+# hashlib
+# json
+# pathlib
+# re
+# typing
+# unicodedata
+#
+# Dipendenze opzionali per lo sviluppo (test):
+# pytest>=8.0
