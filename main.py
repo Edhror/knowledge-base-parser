@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 from src.knowledge_base.knowledge_base_index import KnowledgeBaseIndex
 
-# Percorsi assoluti: l'applicazione funziona da qualunque cartella venga lanciata.
-# La cartella dati può essere sovrascritta con la variabile d'ambiente KB_DATA_DIR.
+# Con questi percorsi assoluti, main.py può essere lanciato da qualsiasi cartella senza problemi.
+# La cartella dati può essere sovrascritta con la variabile d'ambiente KB_DATA_DIR, così da poter utilizzare una directory personalizzata.
 ROOT_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("KB_DATA_DIR", ROOT_DIR / "data"))
 INPUT_DIR = DATA_DIR / "input"
