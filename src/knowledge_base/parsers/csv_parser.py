@@ -101,9 +101,10 @@ class CsvParser(BaseParser):
           row_parts = []
 
           # Se una riga ha più valori delle colonne -> mettili in un dizionario extra_values
+          # (chiave stringa per restare identica dopo il salvataggio in JSON)
           if len(cleaned_row) > num_cols:
             extra = cleaned_row[num_cols:]
-            extra_values_map[row_idx] = extra
+            extra_values_map[str(row_idx)] = extra
             usable_row = cleaned_row[:num_cols]
           else:
             usable_row = cleaned_row
@@ -119,7 +120,7 @@ class CsvParser(BaseParser):
     if not content.strip():
       raise ValueError("Il contenuto (content) è vuoto.")
 
-    metadata = {
+    metadata: dict[str, Any] = {
         "num_rows": num_rows,
         "num_cols": num_cols,
         "delimiter": delimiter

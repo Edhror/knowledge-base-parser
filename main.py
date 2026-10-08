@@ -1,5 +1,19 @@
+import os
+import sys
 from pathlib import Path
 from src.knowledge_base.knowledge_base_index import KnowledgeBaseIndex
+
+# Percorsi assoluti: l'applicazione funziona da qualunque cartella venga lanciata.
+# La cartella dati può essere sovrascritta con la variabile d'ambiente KB_DATA_DIR.
+ROOT_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path(os.environ.get("KB_DATA_DIR", ROOT_DIR / "data"))
+INPUT_DIR = DATA_DIR / "input"
+OUTPUT_DIR = DATA_DIR / "output"
+LOAD_FILE = DATA_DIR / "load" / "knowledge_base.json"
+EXPORT_FILE = OUTPUT_DIR / "knowledge_base.json"
+
+RED, GREEN = "\033[1;31m", "\033[1;32m"
+RESET = "\033[0m"
 
 
 def print_intro():
@@ -25,6 +39,7 @@ def print_intro():
     )
     print(menu)
 
+
 def print_menu():
     menu = (
         "\n\033[1;36m=== Menu Principale ===\033[0m\n"
@@ -36,72 +51,95 @@ def print_menu():
     )
     print(menu)
 
-print_intro()
 
-while True:
-    choice = input("Seleziona un'opzione (1, 2 o 3): ")
-    if choice == "1":
-        print("Hai scelto di creare una nuova knowledge base.")
+def json_to_load() -> Path:
+    """Restituisce il JSON da caricare: quello in data/load se presente,
+    altrimenti l'ultimo export in data/output."""
+    if LOAD_FILE.is_file() or not EXPORT_FILE.is_file():
+        return LOAD_FILE
+    return EXPORT_FILE
+
+
+def load_kb(kb: KnowledgeBaseIndex) -> bool:
+    """Carica la knowledge base da JSON. Restituisce True se il caricamento riesce."""
+    try:
+        kb.load_json_index(json_to_load())
+        return True
+    except (FileNotFoundError, PermissionError, ValueError) as e:
+        print(f"{RED}Errore durante il caricamento: {e}{RESET}")
+        return False
+
+
+def choose_initial_kb() -> KnowledgeBaseIndex:
+    """Primo menu: crea la knowledge base dal parsing o la carica da JSON."""
+    while True:
+        choice = input("Seleziona un'opzione (1, 2 o 3): ").strip()
         kb = KnowledgeBaseIndex()
-        try:
-            kb.get_docs_from_parsing(Path("data/input"))
-        except NotADirectoryError as e:
-            print(f"\033[1;31mErrore durante il parsing: {e}\033[0m")
-            continue
-        break
-    elif choice == "2":
-        print("Hai scelto di caricare una knowledge base esistente.")
-        kb = KnowledgeBaseIndex()
-        try:
-            kb.load_json_index(Path("data/load/knowledge_base.json"))
-        except (FileNotFoundError, PermissionError, ValueError) as e:
-            print(f"\033[1;31mErrore durante il caricamento: {e}\033[0m")
-            continue
-        break
-    elif choice == "3":
-        print("Uscita dall'applicazione. Arrivederci!")
-        exit(0)
-    else:
-        print("Scelta non valida. Per favore, seleziona 1, 2 o 3.")
-
-print_menu()
-
-while True:
-    choice = input("Seleziona un'opzione (1, 2, 3, 4 o 5): ")
-    if choice == "1":
-        print("Hai scelto di visualizzare le statistiche della knowledge base.")
-        stats = kb.get_statistics()
-        print(f"\033[1;32mStatistiche della knowledge base:\033[0m")
-        for key, value in stats.items():
-            print(f"- {key}: {value}")
-    elif choice == "2":
-        print("Hai scelto di cercare documenti per parola chiave.")
-        keyword = input("Inserisci la parola chiave da cercare: ")
-        results = kb.search_documents(keyword)
-        if results:
-            print(f"\033[1;32mTrovati {len(results)} documenti contenenti la parola chiave '{keyword}':\033[0m")
-            for doc in results:
-                print(f"- {doc.title} (ID: {doc.document_id})")
+        if choice == "1":
+            print("Hai scelto di creare una nuova knowledge base.")
+            try:
+                kb.get_docs_from_parsing(INPUT_DIR, OUTPUT_DIR)
+                return kb
+            except NotADirectoryError as e:
+                print(f"{RED}Errore durante il parsing: {e}{RESET}")
+        elif choice == "2":
+            print("Hai scelto di caricare una knowledge base esistente.")
+            if load_kb(kb):
+                return kb
+        elif choice == "3":
+            print("Uscita dall'applicazione. Arrivederci!")
+            sys.exit(0)
         else:
-            print(f"\033[1;31mNessun documento trovato contenente la parola chiave '{keyword}'.\033[0m")
-    elif choice == "3":
-        print("Hai scelto di esportare la knowledge base in JSON.")
-        output_path = Path("data/output/knowledge_base_export.json")
-        try:
-            kb.create_json_index(output_path)
-            print(f"\033[1;32mKnowledge base esportata con successo in {output_path}.\033[0m")
-        except Exception as e:
-            print(f"\033[1;31mErrore durante l'esportazione: {e}\033[0m")
-    elif choice == "4":
-        print("Hai scelto di caricare una knowledge base esistente.")
-        try:
-            kb.load_json_index(Path("data/load/knowledge_base.json"))
-            print("\033[1;32mKnowledge base caricata con successo.\033[0m")
-        except (FileNotFoundError, PermissionError, ValueError) as e:
-            print(f"\033[1;31mErrore durante il caricamento: {e}\033[0m")
-    elif choice == "5":
-        print("Uscita dall'applicazione. Arrivederci!")
-        exit(0)
-    else:
-        print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 5.")
+            print("Scelta non valida. Per favore, seleziona 1, 2 o 3.")
 
+
+def main_menu(kb: KnowledgeBaseIndex):
+    """Secondo menu: consultazione, export e ricaricamento della knowledge base."""
+    print_menu()
+    while True:
+        choice = input("Seleziona un'opzione (1, 2, 3, 4 o 5): ").strip()
+        if choice == "1":
+            print("Hai scelto di visualizzare le statistiche della knowledge base.")
+            print(f"{GREEN}Statistiche della knowledge base:{RESET}")
+            for key, value in kb.get_statistics().items():
+                print(f"- {key}: {value}")
+        elif choice == "2":
+            print("Hai scelto di cercare documenti per parola chiave.")
+            keyword = input("Inserisci la parola chiave da cercare: ").strip()
+            if not keyword:
+                print(f"{RED}La parola chiave non può essere vuota.{RESET}")
+                continue
+            results = kb.search_documents(keyword)
+            if results:
+                print(f"{GREEN}Trovati {len(results)} documenti contenenti la parola chiave '{keyword}':{RESET}")
+                for doc in results:
+                    print(f"- {doc.title} (ID: {doc.document_id})")
+            else:
+                print(f"{RED}Nessun documento trovato contenente la parola chiave '{keyword}'.{RESET}")
+        elif choice == "3":
+            print("Hai scelto di esportare la knowledge base in JSON.")
+            try:
+                kb.create_json_index(EXPORT_FILE)
+            except (ValueError, OSError) as e:
+                print(f"{RED}Errore durante l'esportazione: {e}{RESET}")
+        elif choice == "4":
+            print("Hai scelto di caricare una knowledge base esistente.")
+            load_kb(kb)
+        elif choice == "5":
+            print("Uscita dall'applicazione. Arrivederci!")
+            return
+        else:
+            print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 5.")
+
+
+def main():
+    print_intro()
+    try:
+        kb = choose_initial_kb()
+        main_menu(kb)
+    except (KeyboardInterrupt, EOFError):
+        print("\nUscita dall'applicazione. Arrivederci!")
+
+
+if __name__ == "__main__":
+    main()

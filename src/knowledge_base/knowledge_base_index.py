@@ -137,8 +137,9 @@ class KnowledgeBaseIndex:
         Raises:
           FileNotFoundError: Se il file non esiste o non è un file regolare.
           PermissionError: Se non si hanno i permessi di lettura sul file.
-          ValueError: Se il file non è un JSON valido, non è codificato in UTF-8
-            o se la sua struttura non corrisponde a una lista di documenti validi.
+          ValueError: Se il file non è un JSON valido, non è codificato in UTF-8,
+            se la sua struttura non corrisponde a una lista di documenti validi
+            o se contiene documenti con ID duplicati.
         """
         if not input_path.is_file():
             raise FileNotFoundError(f"File JSON non trovato: {input_path}")
@@ -159,15 +160,20 @@ class KnowledgeBaseIndex:
             )
 
         documents = []
+        seen_ids: set[str] = set()
         for i, doc_data in enumerate(documents_data):
             if not isinstance(doc_data, dict):
                 raise ValueError(f"Documento #{i} non valido: atteso un oggetto JSON.")
             try:
-                documents.append(Document.from_dict(doc_data))
+                document = Document.from_dict(doc_data)
             except KeyError as e:
                 raise ValueError(f"Documento #{i}: campo obbligatorio mancante {e}.") from e
             except (TypeError, AttributeError) as e:
                 raise ValueError(f"Documento #{i}: valori non validi ({e}).") from e
+            if document.document_id in seen_ids:
+                raise ValueError(f"Documento #{i}: ID duplicato '{document.document_id}'.")
+            seen_ids.add(document.document_id)
+            documents.append(document)
 
         self._documents = documents
         print(f"Indice JSON caricato con successo ({len(documents)} documenti).")
@@ -180,6 +186,8 @@ class KnowledgeBaseIndex:
         I file con estensione non ammessa o che generano errori durante il parsing
         vengono saltati e registrati nel file ``log_error.txt`` della cartella di output,
         nel formato ``nome_file.estensione = messaggio di errore``.
+        Sottocartelle e file nascosti (che iniziano con ``.``) vengono ignorati;
+        i documenti con ID già presente vengono registrati come duplicati.
 
         Args:
           input_path (Path): Cartella contenente i file da analizzare.
@@ -202,9 +210,11 @@ class KnowledgeBaseIndex:
         }
         documents: list[Document] = []
         errors: dict[str, str] = {}
+        seen_ids: dict[str, str] = {}
 
         for file_path in sorted(input_path.iterdir()):
-            if not file_path.is_file():
+            # Ignora sottocartelle e file nascosti (es. .gitkeep, .DS_Store)
+            if not file_path.is_file() or file_path.name.startswith("."):
                 continue
 
             parser = parsers.get(file_path.suffix.lower())
@@ -216,15 +226,28 @@ class KnowledgeBaseIndex:
                 continue
 
             try:
-                documents.append(Document.from_dict(parser.parse_file(file_path)))
+                document = Document.from_dict(parser.parse_file(file_path))
             except UnicodeDecodeError:
                 errors[file_path.name] = "Il file non è codificato in UTF-8."
+                continue
             except KeyError as e:
                 errors[file_path.name] = f"Campo obbligatorio mancante {e}."
-            except (OSError, ValueError, csv.Error) as e:
+                continue
+            except (OSError, ValueError, TypeError, csv.Error) as e:
                 errors[file_path.name] = str(e)
+                continue
             except Exception as e:
                 errors[file_path.name] = f"Errore imprevisto ({type(e).__name__}): {e}"
+                continue
+
+            if document.document_id in seen_ids:
+                errors[file_path.name] = (
+                    f"Documento duplicato di '{seen_ids[document.document_id]}' "
+                    f"(ID '{document.document_id}')."
+                )
+                continue
+            seen_ids[document.document_id] = file_path.name
+            documents.append(document)
 
         self._documents = documents
 

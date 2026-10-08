@@ -48,12 +48,23 @@ class MdParser(BaseParser):
         title = None
         num_titles = 0
         title_levels = {}
+        code_fence = None  # delimitatore del blocco di codice aperto (``` o ~~~)
 
         for line in lines:
             stripped_line = line.strip()
+
+            # Le righe dentro i blocchi di codice non sono titoli
+            if code_fence is None and stripped_line.startswith(("```", "~~~")):
+                code_fence = stripped_line[:3]
+                continue
+            if code_fence is not None:
+                if stripped_line.startswith(code_fence):
+                    code_fence = None
+                continue
+
             if stripped_line.startswith("#"):
                 level = len(stripped_line) - len(stripped_line.lstrip('#'))
-                if level > 0 and stripped_line[level:].startswith(" "):
+                if 0 < level <= 6 and stripped_line[level:].startswith(" "):
                     num_titles += 1
                     level_name = f"H{level}"
                     title_levels[level_name] = title_levels.get(level_name, 0) + 1

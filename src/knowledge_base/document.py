@@ -15,7 +15,8 @@ class Document:
     word_count (int, optional): Numero di parole nel contenuto del documento. Viene calcolato automaticamente. Defaults to 0.
     excerpt (str, optional): Breve estratto del contenuto del documento. Vengono presi i primi 100 caratteri.
   """
-  def __init__(self, document_id: str, title: str, content: str, source_format: str, date, source_filename: str = None, metadata: dict = None):
+  def __init__(self, document_id: str, title: str, content: str, source_format: str, date: str,
+               source_filename: str | None = None, metadata: dict | None = None):
     """Inizializza una nuova istanza della classe Document.
 
     Args:
@@ -72,7 +73,19 @@ class Document:
 
     Returns:
       Document: Istanza del documento ricostruita dal dizionario.
+
+    Raises:
+      KeyError: Se manca un campo obbligatorio.
+      TypeError: Se un campo ha un tipo non valido.
     """
+    for field in ("document_id", "title", "content", "source_format", "date"):
+      if not isinstance(data[field], str):
+        raise TypeError(f"il campo '{field}' deve essere una stringa, trovato '{type(data[field]).__name__}'")
+    if data["source_filename"] is not None and not isinstance(data["source_filename"], str):
+      raise TypeError("il campo 'source_filename' deve essere una stringa o null")
+    if data["metadata"] is not None and not isinstance(data["metadata"], dict):
+      raise TypeError("il campo 'metadata' deve essere un oggetto o null")
+
     document_id = data["document_id"]
     title = data["title"]
     content = data["content"]
