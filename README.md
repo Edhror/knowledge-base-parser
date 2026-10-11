@@ -58,7 +58,11 @@ Il flusso principale di esecuzione è gestito dal file `main.py`, che coordina l
 
 **Menu principale**
 1. Visualizza statistiche della knowledge base
-2. Cerca documenti per parola chiave
+2. Cerca documenti per parola chiave (ricerca case-insensitive in titolo e contenuto):
+   - **un solo risultato**: il documento viene mostrato direttamente in visualizzazione standard;
+   - **più risultati**: viene mostrato l'elenco numerato dei documenti trovati, da cui scegliere quale visualizzare oppure annullare la ricerca (`0`); tornando indietro dalla visualizzazione si ritorna all'elenco;
+   - **visualizzazione standard**: mostra tutti gli attributi del documento tranne `content`, con la possibilità di visualizzare il contenuto completo (`1`) o tornare indietro (`0`);
+   - **contenuto completo**: avvisa che il contenuto potrebbe essere molto lungo (indicando numero di caratteri e parole) e stampa l'intero attributo `content`.
 3. Esporta la knowledge base in JSON
 4. Carica una knowledge base esistente (JSON)
 5. Esci dall'applicazione
