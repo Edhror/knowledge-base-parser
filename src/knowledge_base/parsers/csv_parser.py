@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 import datetime
 
-from src.knowledge_base.base_parser import BaseParser
+from src.knowledge_base.parsers.base_parser import BaseParser
 
 
 class CsvParser(BaseParser):
