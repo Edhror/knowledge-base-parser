@@ -2,7 +2,7 @@ import datetime
 from pathlib import Path
 from typing import Any
 
-from src.knowledge_base.base_parser import BaseParser
+from src.knowledge_base.parsers.base_parser import BaseParser
 
 
 class TxtParser(BaseParser):
