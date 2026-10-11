@@ -1,0 +1,3 @@
+Questo è un documento di prova.
+Contiene alcune righe di testo semplice
+utili per verificare il parser TXT.
