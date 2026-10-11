@@ -1,0 +1,23 @@
+﻿TEST CARATTERI SPECIALI
+=======================
+Accentate italiane: àèéìòù ÀÈÉÌÒÙ perché però città
+Altre lingue: Ærøskøbing, Łódź, Çanakkale, Straße, naïve café
+Greco: Αθήνα, καλημέρα | Cirillico: Москва, привет
+CJK: 東京タワー, 你好，世界, 안녕하세요
+Arabo (RTL): مرحبا بالعالم
+Ebraico (RTL): שלום עולם
+Emoji: 🍕🚀👨‍👩‍👧‍👦🇮🇹 ✔ ❤️ 😀
+Simboli: € £ ¥ © ® ™ § ¶ † ‡ • … « » „ “ ” ‘ ’ ‰ ∞ ≠ ≤ ≥ √ π
+Zero-width space:[​] zero-width joiner:[‍] word joiner:[⁠]
+Spazio non separabile:[ ] spazio em:[ ] spazio sottile:[ ]
+Combinanti: é (e + accento) vs é (precomposto); ä vs ä
+Override direzione: ‮abc‬ (testo invertito)
+Caratteri di controllo: TAB:[	] VT:[] FF:[] BEL:[] ESC:[]
+Separatori Unicode di riga: LS:[ ] PS:[ ]
+Fine riga misti: CRLF qui->
+CR solo qui->LF solo qui->
+Surrogate/oltre BMP: 𝒜𝓁𝓅𝒽𝒶 𠜎 𐍈
+Riga con tab	tra	le	colonne
+Virgolette "dritte" e 'apici' con backslash \n \t \u00e9 letterali
+Percent e template: %s %d {0} {{x}} ${HOME} <script>alert(1)</script>
+FINE

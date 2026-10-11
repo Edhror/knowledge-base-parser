@@ -1,0 +1,13 @@
+id,nome,cognome,email,citta,data_iscrizione,attivo
+1001,Antonio,Lacalamita,antonio.lacalamita@example.com,Bari,2025-10-06,true
+1002,Francesca,Dell'Aquila,francesca.dellaquila@example.com,Lecce,2025-01-11,false
+1003,Domenico,Ciccarese,domenico.ciccarese@example.com,Taranto,2025-01-03,false
+1004,Giulia,Mastrogiacomo,giulia.mastrogiacomo@example.com,Brindisi,2025-07-13,false
+1005,Pasquale,De Palma,pasquale.depalma@example.com,Foggia,2025-01-24,true
+1006,Chiara,Sgaramella,chiara.sgaramella@example.com,Monopoli,2025-02-23,false
+1007,Nunzio,Capurso,nunzio.capurso@example.com,Altamura,2025-05-08,false
+1008,Angela,Zaccaria,angela.zaccaria@example.com,Molfetta,2025-03-12,true
+1009,Cosimo,Fanizzi,cosimo.fanizzi@example.com,Ostuni,2025-03-13,false
+1010,Valentina,Putignano,valentina.putignano@example.com,Trani,2025-11-21,false
+1011,Leonardo,Straziota,leonardo.straziota@example.com,Andria,2025-08-14,true
+1012,Rosa,Tedeschi,rosa.tedeschi@example.com,Barletta,2025-11-11,false

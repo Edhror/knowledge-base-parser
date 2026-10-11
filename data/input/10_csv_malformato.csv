@@ -1,0 +1,14 @@
+id,descrizione,importo,note
+1,"Fornitura carta, formato A4",120.50,ok
+2,"Riga con ""virgolette"" interne",89.90,
+3,"Descrizione su
+due righe",45.00,"nota con a capo
+e virgola, dentro"
+4,Riga con una colonna in meno,15.00
+5,Riga con una colonna in più,20.00,ok,EXTRA,EXTRA2
+,,,
+6,"Campo non chiuso,30.00,errore
+7,Importo non numerico,N/D,controllare
+8,"  spazi attorno  ",   12.00   ,  ok  
+9,"Campo con ; punto e virgola",7,1
+10,Ultima riga senza a capo finale,1.00,fine

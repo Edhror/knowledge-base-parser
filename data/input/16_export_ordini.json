@@ -1,0 +1,31 @@
+{
+  "esportazione": "2026-04-02T09:30:00+02:00",
+  "ordini": [
+    {
+      "id": 7001,
+      "cliente": "Pizzeria Il Borgo",
+      "totale": 238.4,
+      "righe": [
+        {
+          "sku": "FAR-25",
+          "qta": 10
+        },
+        {
+          "sku": "POM-5L",
+          "qta": 6
+        }
+      ]
+    },
+    {
+      "id": 7002,
+      "cliente": "Alimentari Gentile",
+      "totale": 91.15,
+      "righe": [
+        {
+          "sku": "OLI-1L",
+          "qta": 12
+        }
+      ]
+    }
+  ]
+}

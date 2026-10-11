@@ -1,0 +1,20 @@
+mese;prodotto;quantita;prezzo_unitario;totale;data_fattura
+gennaio;Olio EVO 5L;232;42,50;9860,00;13/01/2025
+gennaio;Orecchiette 500g;253;1,89;478,17;06/01/2025
+gennaio;Taralli 250g;82;1,35;110,70;24/01/2025
+febbraio;Olio EVO 5L;370;42,50;15725,00;10/02/2025
+febbraio;Orecchiette 500g;336;1,89;635,04;06/02/2025
+febbraio;Taralli 250g;269;1,35;363,15;16/02/2025
+marzo;Olio EVO 5L;50;42,50;2125,00;11/03/2025
+marzo;Orecchiette 500g;139;1,89;262,71;16/03/2025
+marzo;Taralli 250g;236;1,35;318,60;24/03/2025
+aprile;Olio EVO 5L;224;42,50;9520,00;04/04/2025
+aprile;Orecchiette 500g;46;1,89;86,94;23/04/2025
+aprile;Taralli 250g;63;1,35;85,05;07/04/2025
+maggio;Olio EVO 5L;132;42,50;5610,00;19/05/2025
+maggio;Orecchiette 500g;208;1,89;393,12;03/05/2025
+maggio;Taralli 250g;142;1,35;191,70;19/05/2025
+giugno;Olio EVO 5L;136;42,50;5780,00;17/06/2025
+giugno;Orecchiette 500g;126;1,89;238,14;20/06/2025
+giugno;Taralli 250g;355;1,35;479,25;06/06/2025
+TOTALE;;;;;
