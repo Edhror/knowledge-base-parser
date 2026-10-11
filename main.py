@@ -95,8 +95,8 @@ def choose_initial_kb() -> KnowledgeBaseIndex:
 
 def main_menu(kb: KnowledgeBaseIndex):
     """Secondo menu: consultazione, export e ricaricamento della knowledge base."""
-    print_menu()
     while True:
+        print_menu()
         choice = input("Seleziona un'opzione (1, 2, 3, 4 o 5): ").strip()
         if choice == "1":
             print("Hai scelto di visualizzare le statistiche della knowledge base.")
@@ -110,11 +110,7 @@ def main_menu(kb: KnowledgeBaseIndex):
                 print(f"{RED}La parola chiave non può essere vuota.{RESET}")
                 continue
             results = kb.search_documents(keyword)
-            if results:
-                print(f"{GREEN}Trovati {len(results)} documenti contenenti la parola chiave '{keyword}':{RESET}")
-                for doc in results:
-                    print(f"- {doc.title} (ID: {doc.document_id})")
-            else:
+            if not results:
                 print(f"{RED}Nessun documento trovato contenente la parola chiave '{keyword}'.{RESET}")
         elif choice == "3":
             print("Hai scelto di esportare la knowledge base in JSON.")

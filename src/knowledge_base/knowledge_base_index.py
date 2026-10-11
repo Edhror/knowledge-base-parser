@@ -44,6 +44,15 @@ class KnowledgeBaseIndex:
     def search_documents(self, query: str) -> list[Document]:
         """Cerca documenti nell'indice della knowledge base in base a una query.
 
+        In modalità interattiva:
+        - se viene trovato un solo documento, viene mostrato in visualizzazione standard;
+        - se ne vengono trovati più di uno, l'utente viene informato e può scegliere
+          quale documento visualizzare oppure annullare la ricerca (inserendo ``0``).
+          Tornando indietro dalla visualizzazione si ritorna all'elenco dei risultati.
+
+        La visualizzazione standard mostra tutti gli attributi del documento tranne
+        ``content``; da lì l'utente può chiedere il contenuto completo o tornare indietro.
+
         Args:
           query (str): La query di ricerca.
 
@@ -55,7 +64,76 @@ class KnowledgeBaseIndex:
             doc for doc in self._documents
             if query_lower in doc.title.lower() or query_lower in doc.content.lower()
         ]
-        return results
+
+        if not results:
+            return results
+
+        if len(results) == 1:
+            self._show_document(results[0])
+            return results
+
+        while True:
+            print(f"Sono stati trovati {len(results)} documenti corrispondenti a '{query}':")
+            for i, doc in enumerate(results, start=1):
+                print(f"  {i}. {doc.title} ({doc.source_filename or doc.document_id})")
+            print("  0. Annulla la ricerca")
+
+            choice = input(f"Quale documento vuoi visualizzare? (0-{len(results)}): ").strip()
+            if choice == "0":
+                print("Ricerca annullata.")
+                return results
+            if choice.isdigit() and 1 <= int(choice) <= len(results):
+                self._show_document(results[int(choice) - 1])
+            else:
+                print(f"Scelta non valida. Inserisci un numero tra 0 e {len(results)}.")
+
+    def _show_document(self, document: Document) -> None:
+        """Mostra un documento in visualizzazione standard e gestisce la scelta dell'utente
+        tra visualizzazione del contenuto completo e ritorno al menu precedente.
+
+        Args:
+          document (Document): Il documento da visualizzare.
+        """
+        self._print_document(document)
+        while True:
+            print("  1. Visualizza contenuto completo")
+            print("  0. Torna indietro")
+            choice = input("Seleziona un'opzione (0 o 1): ").strip()
+            if choice == "0":
+                return
+            if choice == "1":
+                self._print_full_content(document)
+            else:
+                print("Scelta non valida. Inserisci 0 o 1.")
+
+    @staticmethod
+    def _print_document(document: Document) -> None:
+        """Visualizzazione standard: stampa tutti gli attributi di un oggetto Document
+        tranne ``content``.
+
+        Args:
+          document (Document): Il documento da stampare.
+        """
+        print("=" * 60)
+        for key, value in document.to_dict().items():
+            if key != "content":
+                print(f"{key}: {value}")
+        print("=" * 60)
+
+    @staticmethod
+    def _print_full_content(document: Document) -> None:
+        """Visualizzazione completa: avvisa l'utente e stampa l'intero attributo ``content``.
+
+        Args:
+          document (Document): Il documento di cui stampare il contenuto.
+        """
+        print(
+            f"Attenzione: il contenuto potrebbe essere molto lungo e di difficile visualizzazione "
+            f"({len(document.content)} caratteri, {document.word_count} parole)."
+        )
+        print("=" * 60)
+        print(document.content)
+        print("=" * 60)
 
     def get_statistics(self) -> dict:
         """Restituisce statistiche sull'indice della knowledge base.

@@ -53,10 +53,11 @@ class TestMain(unittest.TestCase):
 
     def test_flusso_completo_parsing_ricerca_export(self):
         self.copy_fixtures()
-        r = self.run_main("1\n1\n2\nroma\n3\n5\n")
+        r = self.run_main("1\n1\n2\nroma\n0\n3\n5\n")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("total_documents: 3", r.stdout)
         self.assertIn("Trovati 1 documenti", r.stdout)
+        self.assertIn("1. Visualizza contenuto completo", r.stdout)
         export = self.cwd / "data" / "output" / "knowledge_base.json"
         self.assertTrue(export.is_file())
         self.assertEqual(len(json.loads(export.read_text(encoding="utf-8"))), 3)
@@ -68,6 +69,18 @@ class TestMain(unittest.TestCase):
         self.copy_fixtures()
         r = self.run_main("1\n2\n   \n5\n")
         self.assertIn("La parola chiave non può essere vuota", r.stdout)
+
+    def test_ricerca_risultati_multipli_dal_menu(self):
+        """Più risultati: scelgo un documento, vedo il contenuto completo,
+        torno all'elenco, annullo e il menu principale resta utilizzabile."""
+        self.copy_fixtures()
+        r = self.run_main("1\n2\na\n2\n1\n0\n0\n1\n5\n")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Sono stati trovati 3 documenti", r.stdout)
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", r.stdout)
+        self.assertIn("Ricerca annullata.", r.stdout)
+        self.assertIn("total_documents: 3", r.stdout)  # opzione 1 del menu dopo la ricerca
+        self.assertNotIn("Scelta non valida", r.stdout)
 
     def test_data_load_ha_precedenza_sull_export(self):
         self.copy_fixtures()

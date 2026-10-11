@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from src.knowledge_base.knowledge_base_index import KnowledgeBaseIndex
 
@@ -125,9 +126,88 @@ class TestConsultazione(BaseIndexTest):
         self.assertEqual(len(self.kb.documents), 3)
 
     def test_ricerca_case_insensitive(self):
-        self.assertEqual([d.title for d in self.kb.search_documents("ROMA")], ["sample"])
-        self.assertEqual(len(self.kb.search_documents("guida")), 1)
-        self.assertEqual(self.kb.search_documents("inesistente"), [])
+        results, _ = self.search("ROMA", ["0"])
+        self.assertEqual([d.title for d in results], ["sample"])
+        results, _ = self.search("guida", ["0"])
+        self.assertEqual(len(results), 1)
+        results, _ = self.search("inesistente", [])
+        self.assertEqual(results, [])
+
+    def search(self, query, inputs):
+        """Esegue search_documents simulando l'input dell'utente.
+
+        Restituisce (risultati, output stampato). Se il metodo chiede più input
+        di quelli forniti, mock solleva StopIteration e il test fallisce.
+        """
+        out = io.StringIO()
+        with mock.patch("builtins.input", side_effect=inputs) as mocked, \
+                contextlib.redirect_stdout(out):
+            results = self.kb.search_documents(query)
+        self.assertEqual(mocked.call_count, len(inputs), "input consumati inattesi")
+        return results, out.getvalue()
+
+    def md_doc(self):
+        return next(d for d in self.kb.documents if d.source_format == "markdown")
+
+    def test_ricerca_nessun_risultato_non_chiede_input(self):
+        results, output = self.search("inesistente", [])
+        self.assertEqual(results, [])
+        self.assertEqual(output, "")
+
+    def test_risultato_singolo_visualizzazione_standard(self):
+        """Visualizzazione standard: tutti gli attributi tranne content."""
+        doc = self.md_doc()
+        _, output = self.search("guida", ["0"])
+        for key in ("document_id", "title", "source_format", "date",
+                    "source_filename", "metadata", "word_count", "excerpt"):
+            self.assertIn(f"{key}: ", output)
+        self.assertNotIn("content:", output)
+        self.assertNotIn("Testo finale.", output)  # parte del content oltre l'excerpt
+        self.assertNotIn("Attenzione", output)
+        self.assertIn(doc.document_id, output)
+        self.assertIn("1. Visualizza contenuto completo", output)
+        self.assertIn("0. Torna indietro", output)
+
+    def test_risultato_singolo_contenuto_completo(self):
+        doc = self.md_doc()
+        _, output = self.search("guida", ["1", "0"])
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", output)
+        self.assertIn(f"{len(doc.content)} caratteri, {doc.word_count} parole", output)
+        self.assertIn(doc.content, output)
+        # Dopo il contenuto completo vengono riproposte le opzioni
+        self.assertEqual(output.count("1. Visualizza contenuto completo"), 2)
+
+    def test_visualizzazione_scelta_non_valida(self):
+        _, output = self.search("guida", ["x", "5", "0"])
+        self.assertEqual(output.count("Scelta non valida. Inserisci 0 o 1."), 2)
+
+    def test_risultati_multipli_annulla(self):
+        results, output = self.search("a", ["0"])
+        self.assertEqual(len(results), 3)
+        self.assertIn("Sono stati trovati 3 documenti corrispondenti a 'a'", output)
+        for i in (1, 2, 3):
+            self.assertIn(f"  {i}. ", output)
+        self.assertIn("0. Annulla la ricerca", output)
+        self.assertIn("Ricerca annullata.", output)
+        self.assertNotIn("document_id:", output)
+
+    def test_risultati_multipli_scelta_e_ritorno_all_elenco(self):
+        """Scelgo un documento, torno indietro (all'elenco) e poi annullo."""
+        results, output = self.search("a", ["2", "0", "0"])
+        scelto = results[1]
+        self.assertIn(f"document_id: {scelto.document_id}", output)
+        self.assertEqual(output.count("Sono stati trovati 3 documenti"), 2)
+        self.assertIn("Ricerca annullata.", output)
+
+    def test_risultati_multipli_scelta_non_valida(self):
+        _, output = self.search("a", ["9", "abc", "0"])
+        self.assertEqual(output.count("Scelta non valida. Inserisci un numero tra 0 e 3."), 2)
+        self.assertIn("Ricerca annullata.", output)
+
+    def test_risultati_multipli_contenuto_completo(self):
+        results, output = self.search("a", ["2", "1", "0", "0"])
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", output)
+        self.assertIn(results[1].content, output)
 
     def test_get_document_by_id(self):
         doc = self.kb.documents[0]
