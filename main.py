@@ -44,11 +44,12 @@ def print_menu():
     menu = (
         "\n\033[1;36m=== Menu Principale ===\033[0m\n"
         "\033[1;35m1.\033[0m Visualizza statistiche della knowledge base\n"
-        "\033[1;35m2.\033[0m Cerca documenti per parola chiave\n"
-        "\033[1;35m3.\033[0m Filtra per estensione\n"
-        "\033[1;35m4.\033[0m Esporta la knowledge base in JSON\n"
-        "\033[1;35m5.\033[0m Carica una knowledge base esistente (JSON)\n"
-        "\033[1;35m6.\033[0m Esci dall'applicazione\n"
+        "\033[1;35m2.\033[0m Visualizza Knowledge\n"
+        "\033[1;35m3.\033[0m Cerca documenti per parola chiave\n"
+        "\033[1;35m4.\033[0m Filtra per estensione\n"
+        "\033[1;35m5.\033[0m Esporta la knowledge base in JSON\n"
+        "\033[1;35m6.\033[0m Carica una knowledge base esistente (JSON)\n"
+        "\033[1;35m7.\033[0m Esci dall'applicazione\n"
     )
     print(menu)
 
@@ -98,13 +99,16 @@ def main_menu(kb: KnowledgeBaseIndex):
     """Secondo menu: consultazione, export e ricaricamento della knowledge base."""
     while True:
         print_menu()
-        choice = input("Seleziona un'opzione (1, 2, 3, 4, 5 o 6): ").strip()
+        choice = input("Seleziona un'opzione (1, 2, 3, 4, 5, 6 o 7): ").strip()
         if choice == "1":
             print("Hai scelto di visualizzare le statistiche della knowledge base.")
             print(f"{GREEN}Statistiche della knowledge base:{RESET}")
             for key, value in kb.get_statistics().items():
                 print(f"- {key}: {value}")
         elif choice == "2":
+            print("Hai scelto di visualizzare la knowledge base.")
+            kb.show_knowledge_base()
+        elif choice == "3":
             print("Hai scelto di cercare documenti per parola chiave.")
             keyword = input("Inserisci la parola chiave da cercare: ").strip()
             if not keyword:
@@ -113,7 +117,7 @@ def main_menu(kb: KnowledgeBaseIndex):
             results = kb.search_documents(keyword)
             if not results:
                 print(f"{RED}Nessun documento trovato contenente la parola chiave '{keyword}'.{RESET}")
-        elif choice == "3":
+        elif choice == "4":
             print("Hai scelto di filtrare per estensione.")
             extension = input("Inserisci l'estensione da filtrare (txt, md, csv): ").strip().lower()
             if extension not in ["txt", "md", "csv"]:
@@ -122,20 +126,20 @@ def main_menu(kb: KnowledgeBaseIndex):
             results = kb.filter_by_extension(extension)
             if not results:
                 print(f"{RED}Nessun documento trovato con l'estensione '{extension}'.{RESET}")
-        elif choice == "4":
+        elif choice == "5":
             print("Hai scelto di esportare la knowledge base in JSON.")
             try:
                 kb.create_json_index(EXPORT_FILE)
             except (ValueError, OSError) as e:
                 print(f"{RED}Errore durante l'esportazione: {e}{RESET}")
-        elif choice == "5":
+        elif choice == "6":
             print("Hai scelto di caricare una knowledge base esistente.")
             load_kb(kb)
-        elif choice == "6":
+        elif choice == "7":
             print("Uscita dall'applicazione. Arrivederci!")
             return
         else:
-            print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 6.")
+            print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 7.")
 
 
 def main():

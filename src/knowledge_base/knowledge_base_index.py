@@ -382,3 +382,26 @@ class KnowledgeBaseIndex:
                 self._show_document(results[int(choice) - 1])
             else:
                 print(f"  \033[91mScelta non valida. Inserisci un numero tra 0 e {len(results)}.\033[0m")
+
+    def show_knowledge_base(self) -> None:
+        """Mostra tutti i documenti presenti nell'indice della knowledge base in modalità interattiva.
+
+        L'utente può scegliere quale documento visualizzare in dettaglio o tornare indietro.
+        """
+        if not self._documents:
+            print("La knowledge base è vuota.")
+            return
+
+        while True:
+            print(f"Sono presenti {len(self._documents)} documenti nella knowledge base:")
+            for i, doc in enumerate(self._documents, start=1):
+                print(f"  \033[1;35m{i}.\033[0m {doc.title} ({doc.source_filename or doc.document_id})")
+            print("  \033[1;35m0.\033[0m Torna indietro")
+
+            choice = input(f"Quale documento vuoi visualizzare? (0-{len(self._documents)}): ").strip()
+            if choice == "0":
+                return
+            if choice.isdigit() and 1 <= int(choice) <= len(self._documents):
+                self._show_document(self._documents[int(choice) - 1])
+            else:
+                print(f"  \033[91mScelta non valida. Inserisci un numero tra 0 e {len(self._documents)}.\033[0m")

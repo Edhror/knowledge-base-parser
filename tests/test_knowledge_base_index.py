@@ -2,6 +2,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -11,6 +12,7 @@ from unittest import mock
 from src.knowledge_base.knowledge_base_index import KnowledgeBaseIndex
 
 FIXTURES = Path(__file__).parent / "fixtures"
+ANSI = re.compile(r"\x1b\[[0-9;]*m")  # codici colore del terminale
 
 
 class BaseIndexTest(unittest.TestCase):
@@ -49,18 +51,18 @@ class BaseIndexTest(unittest.TestCase):
     def read_log(self):
         return (self.output / "log_error.txt").read_text(encoding="utf-8")
 
-    def interact(self, func, arg, inputs):
+    def interact(self, func, inputs, *args):
         """Esegue un metodo interattivo simulando l'input dell'utente.
 
-        Restituisce (valore di ritorno, output stampato) e verifica che vengano
-        consumati esattamente gli input forniti.
+        Restituisce (valore di ritorno, output stampato senza codici colore ANSI)
+        e verifica che vengano consumati esattamente gli input forniti.
         """
         out = io.StringIO()
         with mock.patch("builtins.input", side_effect=inputs) as mocked, \
                 contextlib.redirect_stdout(out):
-            result = func(arg)
+            result = func(*args)
         self.assertEqual(mocked.call_count, len(inputs), "input consumati inattesi")
-        return result, out.getvalue()
+        return result, ANSI.sub("", out.getvalue())
 
 
 class TestParsing(BaseIndexTest):
@@ -152,12 +154,7 @@ class TestConsultazione(BaseIndexTest):
         Restituisce (risultati, output stampato). Se il metodo chiede più input
         di quelli forniti, mock solleva StopIteration e il test fallisce.
         """
-        out = io.StringIO()
-        with mock.patch("builtins.input", side_effect=inputs) as mocked, \
-                contextlib.redirect_stdout(out):
-            results = self.kb.search_documents(query)
-        self.assertEqual(mocked.call_count, len(inputs), "input consumati inattesi")
-        return results, out.getvalue()
+        return self.interact(self.kb.search_documents, inputs, query)
 
     def md_doc(self):
         return next(d for d in self.kb.documents if d.source_format == "markdown")
@@ -178,8 +175,8 @@ class TestConsultazione(BaseIndexTest):
         self.assertNotIn("Testo finale.", output)  # parte del content oltre l'excerpt
         self.assertNotIn("Attenzione", output)
         self.assertIn(doc.document_id, output)
-        self.assertIn("1. Visualizza contenuto completo", output)
-        self.assertIn("0. Torna indietro", output)
+        self.assertIn("Visualizza contenuto completo", output)
+        self.assertIn("Torna indietro", output)
 
     def test_risultato_singolo_contenuto_completo(self):
         doc = self.md_doc()
@@ -188,7 +185,7 @@ class TestConsultazione(BaseIndexTest):
         self.assertIn(f"{len(doc.content)} caratteri, {doc.word_count} parole", output)
         self.assertIn(doc.content, output)
         # Dopo il contenuto completo vengono riproposte le opzioni
-        self.assertEqual(output.count("1. Visualizza contenuto completo"), 2)
+        self.assertEqual(output.count("Visualizza contenuto completo"), 2)
 
     def test_visualizzazione_scelta_non_valida(self):
         _, output = self.search("guida", ["x", "5", "0"])
@@ -251,7 +248,7 @@ class TestFiltroEstensione(BaseIndexTest):
         self.parse()
 
     def filter(self, extension, inputs):
-        return self.interact(self.kb.filter_by_extension, extension, inputs)
+        return self.interact(self.kb.filter_by_extension, inputs, extension)
 
     def load_docs(self, filenames):
         """Carica nell'indice documenti fittizi con i source_filename indicati."""
@@ -275,7 +272,25 @@ class TestFiltroEstensione(BaseIndexTest):
         self.assertIn(f"document_id: {results[0].document_id}", output)
         self.assertNotIn("content:", output)
         self.assertNotIn("Sono stati trovati", output)
-        self.assertIn("1. Visualizza contenuto completo", output)
+        self.assertIn("Visualizza contenuto completo", output)
+
+    def test_estensione_normalizzata(self):
+        """Punto iniziale, spazi e maiuscole nell'estensione vengono ignorati."""
+        for ext in (".md", " md ", ".MD", "  .Md"):
+            with self.subTest(ext=ext):
+                results, _ = self.filter(ext, ["0"])
+                self.assertEqual([d.source_filename for d in results], ["sample.md"])
+
+    def test_messaggio_usa_estensione_normalizzata(self):
+        _, output = self.filter(" .TXT ", ["0"])
+        self.assertIn("corrispondenti all'estensione 'txt'", output)
+
+    def test_estensione_vuota_nessun_risultato(self):
+        for ext in ("", "   ", "."):
+            with self.subTest(ext=ext):
+                results, output = self.filter(ext, [])
+                self.assertEqual(results, [])
+                self.assertEqual(output, "")
 
     def test_risultato_singolo_contenuto_completo(self):
         results, output = self.filter("csv", ["1", "0"])
@@ -335,6 +350,74 @@ class TestFiltroEstensione(BaseIndexTest):
         prima = [d.document_id for d in self.kb.documents]
         self.filter("txt", ["0"])
         self.assertEqual([d.document_id for d in self.kb.documents], prima)
+
+
+class TestVisualizzaKnowledgeBase(BaseIndexTest):
+    """Test di show_knowledge_base."""
+
+    def show(self, inputs):
+        result, output = self.interact(self.kb.show_knowledge_base, inputs)
+        self.assertIsNone(result)
+        return output
+
+    def setUp(self):
+        super().setUp()
+        self.copy_fixtures()
+        self.parse()
+
+    def test_knowledge_base_vuota(self):
+        self.kb = KnowledgeBaseIndex()
+        output = self.show([])
+        self.assertEqual(output.strip(), "La knowledge base è vuota.")
+
+    def test_elenco_e_torna_indietro(self):
+        output = self.show(["0"])
+        self.assertIn("Sono presenti 3 documenti nella knowledge base:", output)
+        for i, doc in enumerate(self.kb.documents, start=1):
+            self.assertIn(f"  {i}. {doc.title} ({doc.source_filename})", output)
+        self.assertIn("  0. Torna indietro", output)
+        self.assertNotIn("document_id:", output)
+        self.assertNotIn("Ricerca annullata", output)
+
+    def test_documento_singolo_mostra_comunque_l_elenco(self):
+        """A differenza di ricerca e filtro, con un solo documento si parte dall'elenco."""
+        self.kb = KnowledgeBaseIndex()
+        self.write("solo.txt", "unico")
+        for f in ("sample.txt", "sample.md", "sample.csv"):
+            (self.input / f).unlink()
+        self.parse()
+        output = self.show(["0"])
+        self.assertIn("Sono presenti 1 documenti nella knowledge base:", output)
+        self.assertNotIn("document_id:", output)
+
+    def test_scelta_documento_e_ritorno_all_elenco(self):
+        doc = self.kb.documents[1]
+        output = self.show(["2", "0", "0"])
+        self.assertIn(f"document_id: {doc.document_id}", output)
+        self.assertNotIn("content:", output)
+        self.assertEqual(output.count("Sono presenti 3 documenti"), 2)
+
+    def test_contenuto_completo(self):
+        doc = self.kb.documents[2]
+        output = self.show(["3", "1", "0", "0"])
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", output)
+        self.assertIn(doc.content, output)
+
+    def test_visualizza_piu_documenti_in_sequenza(self):
+        docs = self.kb.documents
+        output = self.show(["1", "0", "3", "0", "0"])
+        self.assertIn(f"document_id: {docs[0].document_id}", output)
+        self.assertIn(f"document_id: {docs[2].document_id}", output)
+        self.assertEqual(output.count("Sono presenti 3 documenti"), 3)
+
+    def test_scelta_non_valida(self):
+        output = self.show(["4", "-1", "abc", "", "0"])
+        self.assertEqual(output.count("Scelta non valida. Inserisci un numero tra 0 e 3."), 4)
+
+    def test_non_modifica_indice(self):
+        prima = [d.to_dict() for d in self.kb.documents]
+        self.show(["1", "1", "0", "0"])
+        self.assertEqual([d.to_dict() for d in self.kb.documents], prima)
 
 
 class TestJson(BaseIndexTest):
