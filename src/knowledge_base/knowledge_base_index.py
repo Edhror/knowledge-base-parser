@@ -144,11 +144,15 @@ class KnowledgeBaseIndex:
         total_documents = len(self._documents)
         total_word_count = sum(doc.word_count for doc in self._documents)
         average_word_count = total_word_count / total_documents if total_documents > 0 else 0
+        longest_content_doc = max(self._documents, key=lambda doc: doc.word_count, default=None)
+        shortest_content_doc = min(self._documents, key=lambda doc: doc.word_count, default=None)
 
         return {
-            "total_documents": total_documents,
-            "total_word_count": total_word_count,
-            "average_word_count": average_word_count
+            "Documenti Totali": total_documents,
+            "Conteggio Totale Parole": total_word_count,
+            "Conteggio Medio Parole": average_word_count,
+            "Documento con Contenuto più Lungo": longest_content_doc.document_id if longest_content_doc else None,
+            "Documento con Contenuto più Corto": shortest_content_doc.document_id if shortest_content_doc else None
         }
 
     def create_json_index(self, output_path: Path) -> Path:
