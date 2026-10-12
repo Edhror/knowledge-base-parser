@@ -56,7 +56,7 @@ class TestMain(unittest.TestCase):
         r = self.run_main("1\n1\n2\nroma\n0\n3\n5\n")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("total_documents: 3", r.stdout)
-        self.assertIn("Trovati 1 documenti", r.stdout)
+        self.assertIn("source_filename: sample.csv", r.stdout)  # unico risultato per "roma"
         self.assertIn("1. Visualizza contenuto completo", r.stdout)
         export = self.cwd / "data" / "output" / "knowledge_base.json"
         self.assertTrue(export.is_file())

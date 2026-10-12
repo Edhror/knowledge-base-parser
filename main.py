@@ -45,9 +45,10 @@ def print_menu():
         "\n\033[1;36m=== Menu Principale ===\033[0m\n"
         "\033[1;35m1.\033[0m Visualizza statistiche della knowledge base\n"
         "\033[1;35m2.\033[0m Cerca documenti per parola chiave\n"
-        "\033[1;35m3.\033[0m Esporta la knowledge base in JSON\n"
-        "\033[1;35m4.\033[0m Carica una knowledge base esistente (JSON)\n"
-        "\033[1;35m5.\033[0m Esci dall'applicazione\n"
+        "\033[1;35m3.\033[0m Filtra per estensione\n"
+        "\033[1;35m4.\033[0m Esporta la knowledge base in JSON\n"
+        "\033[1;35m5.\033[0m Carica una knowledge base esistente (JSON)\n"
+        "\033[1;35m6.\033[0m Esci dall'applicazione\n"
     )
     print(menu)
 
@@ -97,7 +98,7 @@ def main_menu(kb: KnowledgeBaseIndex):
     """Secondo menu: consultazione, export e ricaricamento della knowledge base."""
     while True:
         print_menu()
-        choice = input("Seleziona un'opzione (1, 2, 3, 4 o 5): ").strip()
+        choice = input("Seleziona un'opzione (1, 2, 3, 4, 5 o 6): ").strip()
         if choice == "1":
             print("Hai scelto di visualizzare le statistiche della knowledge base.")
             print(f"{GREEN}Statistiche della knowledge base:{RESET}")
@@ -113,19 +114,28 @@ def main_menu(kb: KnowledgeBaseIndex):
             if not results:
                 print(f"{RED}Nessun documento trovato contenente la parola chiave '{keyword}'.{RESET}")
         elif choice == "3":
+            print("Hai scelto di filtrare per estensione.")
+            extension = input("Inserisci l'estensione da filtrare (txt, md, csv): ").strip().lower()
+            if extension not in ["txt", "md", "csv"]:
+                print(f"{RED}Estensione non valida. Per favore, inserisci txt, md o csv.{RESET}")
+                continue
+            results = kb.filter_by_extension(extension)
+            if not results:
+                print(f"{RED}Nessun documento trovato con l'estensione '{extension}'.{RESET}")
+        elif choice == "4":
             print("Hai scelto di esportare la knowledge base in JSON.")
             try:
                 kb.create_json_index(EXPORT_FILE)
             except (ValueError, OSError) as e:
                 print(f"{RED}Errore durante l'esportazione: {e}{RESET}")
-        elif choice == "4":
+        elif choice == "5":
             print("Hai scelto di caricare una knowledge base esistente.")
             load_kb(kb)
-        elif choice == "5":
+        elif choice == "6":
             print("Uscita dall'applicazione. Arrivederci!")
             return
         else:
-            print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 5.")
+            print("Scelta non valida. Per favore, seleziona un'opzione tra 1 e 6.")
 
 
 def main():

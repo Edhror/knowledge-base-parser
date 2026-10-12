@@ -75,8 +75,8 @@ class KnowledgeBaseIndex:
         while True:
             print(f"Sono stati trovati {len(results)} documenti corrispondenti a '{query}':")
             for i, doc in enumerate(results, start=1):
-                print(f"  {i}. {doc.title} ({doc.source_filename or doc.document_id})")
-            print("  0. Annulla la ricerca")
+                print(f"  \033[1;35m{i}.\033[0m {doc.title} ({doc.source_filename or doc.document_id})")
+            print("  \033[1;35m0.\033[0m Annulla la ricerca")
 
             choice = input(f"Quale documento vuoi visualizzare? (0-{len(results)}): ").strip()
             if choice == "0":
@@ -85,7 +85,7 @@ class KnowledgeBaseIndex:
             if choice.isdigit() and 1 <= int(choice) <= len(results):
                 self._show_document(results[int(choice) - 1])
             else:
-                print(f"Scelta non valida. Inserisci un numero tra 0 e {len(results)}.")
+                print(f"\033[91mScelta non valida. Inserisci un numero tra 0 e {len(results)}.\033[0m")
 
     def _show_document(self, document: Document) -> None:
         """Mostra un documento in visualizzazione standard e gestisce la scelta dell'utente
@@ -96,15 +96,15 @@ class KnowledgeBaseIndex:
         """
         self._print_document(document)
         while True:
-            print("  1. Visualizza contenuto completo")
-            print("  0. Torna indietro")
+            print("\033[1;35m1.\033[0mVisualizza contenuto completo")
+            print("\033[1;35m0.\033[0mTorna indietro")
             choice = input("Seleziona un'opzione (0 o 1): ").strip()
             if choice == "0":
                 return
             if choice == "1":
                 self._print_full_content(document)
             else:
-                print("Scelta non valida. Inserisci 0 o 1.")
+                print("\033[91mScelta non valida. Inserisci 0 o 1.\033[0m")
 
     @staticmethod
     def _print_document(document: Document) -> None:
@@ -344,3 +344,41 @@ class KnowledgeBaseIndex:
         )
         return documents
 
+    def filter_by_extension(self, extension: str) -> list[Document]:
+        """Filtra i documenti dell'indice in base all'estensione del file sorgente.
+        Verrà restituito un elenco di documenti che hanno un ``source_filename`` con l'estensione specificata.
+        Da tale lista l'utente può scegliere quale documento visualizzare in modalità interattiva.
+
+        Args:
+          extension (str): L'estensione da filtrare (es. 'txt', 'md', 'csv').
+
+        Returns:
+          list[Document]: L'elenco dei documenti che corrispondono all'estensione specificata.
+        """
+        extension_lower = extension.strip().lstrip(".").lower()
+        results = [
+            doc for doc in self._documents
+            if doc.source_filename and doc.source_filename.lower().endswith(f".{extension_lower}")
+        ]
+
+        if not results:
+            return results
+
+        if len(results) == 1:
+            self._show_document(results[0])
+            return results
+
+        while True:
+            print(f"Sono stati trovati {len(results)} documenti corrispondenti all'estensione '{extension_lower}':")
+            for i, doc in enumerate(results, start=1):
+                print(f"  \033[1;35m{i}.\033[0m {doc.title} ({doc.source_filename or doc.document_id})")
+            print("  \033[1;35m0.\033[0m Annulla la ricerca")
+
+            choice = input(f"Quale documento vuoi visualizzare? (0-{len(results)}): ").strip()
+            if choice == "0":
+                print("Ricerca annullata.")
+                return results
+            if choice.isdigit() and 1 <= int(choice) <= len(results):
+                self._show_document(results[int(choice) - 1])
+            else:
+                print(f"  \033[91mScelta non valida. Inserisci un numero tra 0 e {len(results)}.\033[0m")

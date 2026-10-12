@@ -49,6 +49,19 @@ class BaseIndexTest(unittest.TestCase):
     def read_log(self):
         return (self.output / "log_error.txt").read_text(encoding="utf-8")
 
+    def interact(self, func, arg, inputs):
+        """Esegue un metodo interattivo simulando l'input dell'utente.
+
+        Restituisce (valore di ritorno, output stampato) e verifica che vengano
+        consumati esattamente gli input forniti.
+        """
+        out = io.StringIO()
+        with mock.patch("builtins.input", side_effect=inputs) as mocked, \
+                contextlib.redirect_stdout(out):
+            result = func(arg)
+        self.assertEqual(mocked.call_count, len(inputs), "input consumati inattesi")
+        return result, out.getvalue()
+
 
 class TestParsing(BaseIndexTest):
 
@@ -225,6 +238,103 @@ class TestConsultazione(BaseIndexTest):
             KnowledgeBaseIndex().get_statistics(),
             {"total_documents": 0, "total_word_count": 0, "average_word_count": 0},
         )
+
+
+class TestFiltroEstensione(BaseIndexTest):
+    """Test di filter_by_extension: fixture (1 file per formato) + 2 .txt aggiuntivi."""
+
+    def setUp(self):
+        super().setUp()
+        self.copy_fixtures()
+        self.write("altro.txt", "Secondo documento di testo.")
+        self.write("terzo.txt", "Terzo documento di testo.")
+        self.parse()
+
+    def filter(self, extension, inputs):
+        return self.interact(self.kb.filter_by_extension, extension, inputs)
+
+    def load_docs(self, filenames):
+        """Carica nell'indice documenti fittizi con i source_filename indicati."""
+        docs = [
+            {"document_id": f"id{i}", "title": f"t{i}", "content": "c", "source_format": "text",
+             "date": "2026-01-01 00:00:00", "source_filename": name, "metadata": {}}
+            for i, name in enumerate(filenames)
+        ]
+        path = self.tmp / "in.json"
+        path.write_text(json.dumps(docs), encoding="utf-8")
+        self.quiet(self.kb.load_json_index, path)
+
+    def test_nessun_risultato_non_chiede_input(self):
+        results, output = self.filter("pdf", [])
+        self.assertEqual(results, [])
+        self.assertEqual(output, "")
+
+    def test_risultato_singolo_visualizzazione_standard(self):
+        results, output = self.filter("md", ["0"])
+        self.assertEqual([d.source_filename for d in results], ["sample.md"])
+        self.assertIn(f"document_id: {results[0].document_id}", output)
+        self.assertNotIn("content:", output)
+        self.assertNotIn("Sono stati trovati", output)
+        self.assertIn("1. Visualizza contenuto completo", output)
+
+    def test_risultato_singolo_contenuto_completo(self):
+        results, output = self.filter("csv", ["1", "0"])
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", output)
+        self.assertIn(results[0].content, output)
+
+    def test_case_insensitive(self):
+        for ext in ("MD", "Md", "md"):
+            with self.subTest(ext=ext):
+                results, _ = self.filter(ext, ["0"])
+                self.assertEqual([d.source_filename for d in results], ["sample.md"])
+
+    def test_estensione_file_maiuscola(self):
+        self.write("UPPER.TXT", "testo maiuscolo")
+        self.parse()
+        results, _ = self.filter("txt", ["0"])
+        self.assertIn("UPPER.TXT", [d.source_filename for d in results])
+
+    def test_risultati_multipli_annulla(self):
+        results, output = self.filter("txt", ["0"])
+        self.assertEqual(
+            sorted(d.source_filename for d in results),
+            ["altro.txt", "sample.txt", "terzo.txt"],
+        )
+        self.assertIn("Sono stati trovati 3 documenti corrispondenti all'estensione 'txt'", output)
+        self.assertIn("0. Annulla la ricerca", output)
+        self.assertIn("Ricerca annullata.", output)
+        self.assertNotIn("document_id:", output)
+
+    def test_risultati_multipli_scelta_e_ritorno_all_elenco(self):
+        results, output = self.filter("txt", ["2", "0", "0"])
+        self.assertIn(f"document_id: {results[1].document_id}", output)
+        self.assertEqual(output.count("Sono stati trovati 3 documenti"), 2)
+        self.assertIn("Ricerca annullata.", output)
+
+    def test_risultati_multipli_contenuto_completo(self):
+        results, output = self.filter("txt", ["3", "1", "0", "0"])
+        self.assertIn("Attenzione: il contenuto potrebbe essere molto lungo", output)
+        self.assertIn(results[2].content, output)
+
+    def test_risultati_multipli_scelta_non_valida(self):
+        _, output = self.filter("txt", ["4", "-1", "abc", "", "0"])
+        self.assertEqual(output.count("Scelta non valida. Inserisci un numero tra 0 e 3."), 4)
+
+    def test_solo_estensione_finale(self):
+        """Conta solo l'ultima estensione e non le corrispondenze parziali."""
+        self.load_docs(["a.txt.md", "b.markdown", "c.mdx", "md", "d.md"])
+        results, _ = self.filter("md", ["0"])
+        self.assertEqual(sorted(d.source_filename for d in results), ["a.txt.md", "d.md"])
+
+    def test_documenti_senza_source_filename_esclusi(self):
+        self.load_docs([None, "a.txt"])
+        results, _ = self.filter("txt", ["0"])
+        self.assertEqual([d.source_filename for d in results], ["a.txt"])
+
+    def test_non_modifica_indice(self):
+        prima = [d.document_id for d in self.kb.documents]
+        self.filter("txt", ["0"])
+        self.assertEqual([d.document_id for d in self.kb.documents], prima)
 
 
 class TestJson(BaseIndexTest):
