@@ -58,14 +58,16 @@ Il flusso principale di esecuzione è gestito dal file `main.py`, che coordina l
 
 **Menu principale**
 1. Visualizza statistiche della knowledge base
-2. Cerca documenti per parola chiave (ricerca case-insensitive in titolo e contenuto):
-   - **un solo risultato**: il documento viene mostrato direttamente in visualizzazione standard;
-   - **più risultati**: viene mostrato l'elenco numerato dei documenti trovati, da cui scegliere quale visualizzare oppure annullare la ricerca (`0`); tornando indietro dalla visualizzazione si ritorna all'elenco;
-   - **visualizzazione standard**: mostra tutti gli attributi del documento tranne `content`, con la possibilità di visualizzare il contenuto completo (`1`) o tornare indietro (`0`);
-   - **contenuto completo**: avvisa che il contenuto potrebbe essere molto lungo (indicando numero di caratteri e parole) e stampa l'intero attributo `content`.
-3. Esporta la knowledge base in JSON
-4. Carica una knowledge base esistente (JSON)
-5. Esci dall'applicazione
+2. Visualizza la knowledge base: mostra l'elenco numerato di tutti i documenti, da cui scegliere quale visualizzare oppure tornare al menu principale (`0`); tornando indietro dalla visualizzazione si ritorna all'elenco. Se la knowledge base è vuota viene mostrato un avviso. Per ciascun documento visualizzato viene mostrata la struttura normalizzata senza il contenuto, con la possibilità di visualizzare il contenuto completo (`1`) o tornare indietro (`0`).
+3. Cerca documenti per parola chiave (ricerca case-insensitive in titolo e contenuto): mostra i documenti il cui titolo o contenuto contiene la parola chiave, con lo stesso comportamento di `Visualizza la knowledge base` (visualizzazione diretta se c'è un solo risultato, elenco con possibilità di annullare se ce ne sono di più, messaggio se non ce ne sono).
+4. Filtra per estensione (`txt`, `md` o `csv`, senza distinzione tra maiuscole e minuscole): mostra i documenti il cui file sorgente ha l'estensione indicata, con lo stesso comportamento di `Visualizza la knowledge base` (visualizzazione diretta se c'è un solo risultato, elenco con possibilità di annullare se ce ne sono di più, messaggio se non ce ne sono). Estensioni diverse da quelle supportate vengono rifiutate.
+5. Esporta la knowledge base in JSON
+6. Carica una knowledge base esistente (JSON)
+7. Esci dall'applicazione
+
+Per le opzioni 2, 3 e 4 la visualizzazione di un documento funziona così:
+- **visualizzazione standard**: mostra tutti gli attributi del documento tranne `content`, con la possibilità di visualizzare il contenuto completo (`1`) o tornare indietro (`0`);
+- **contenuto completo**: avvisa che il contenuto potrebbe essere molto lungo (indicando numero di caratteri e parole) e stampa l'intero attributo `content`.
 
 Quando l'utente seleziona l'opzione di parsing, il programma scansiona la cartella di input (`data/input`, oppure `$KB_DATA_DIR/input` se è impostata la variabile d'ambiente), identifica i file supportati in base all'estensione e li passa ai parser appropriati. Ogni parser legge il contenuto del file ed estrae le informazioni rilevanti in un dizionario, che `KnowledgeBaseIndex` converte in un oggetto `Document`. Questi oggetti vengono raccolti in una collezione che rappresenta la knowledge base.
 
